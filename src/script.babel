@@ -1,0 +1,167 @@
+const { useState, useEffect } = React;
+
+function Clock() {
+  [breakLength, setBreakLength] = useState(5);
+  [sessionLength, setSessionLength] = useState(25);
+  [isRunning, toggleRunning] = useState(false);
+  [timeLeft, setTimeLeft] = useState(sessionLength * 60);
+  [currentlyRunning, setCurrentlyRunning] = useState("Session");
+  [int, setInt] = useState(undefined);
+  [clockLabel, setClockLabel] = useState("Session");
+
+  const incrementBreakCounter = (amount) => (oldState) => {
+    const newState = oldState + amount;
+    if (!isRunning && newState > 0 && newState <= 60) {
+      return newState;
+    } else return oldState;
+  };
+
+  const incrementSessionCounter = (amount) => (oldState) => {
+    const newState = oldState + amount;
+    if (!isRunning && newState > 0 && newState <= 60) {
+      setTimeLeft(newState * 60);
+      return newState;
+    } else return oldState;
+  };
+
+  const startTimer = () => {
+    setInt((oldState) => {
+      clearInterval(int);
+
+      return setInterval(() => {
+        if (!isRunning) clearInterval(int);
+        setTimeLeft((oldState) => oldState - 1);
+        if (timeLeft == 0) document.getElementById("beep").play();
+        if (timeLeft < 0) {
+          if (currentlyRunning == "Session") {
+            setCurrentlyRunning("Break");
+            setTimeLeft(breakLength * 60);
+            startTimer();
+          } else {
+            setCurrentlyRunning("Session");
+            setTimeLeft(sessionLength * 60);
+            startTimer();
+          }
+        }
+      }, 1000);
+    });
+  };
+
+  const resetClock = () => {
+    clearInterval(int);
+    toggleRunning(false);
+    setTimeLeft(1500);
+    setBreakLength(5);
+    setSessionLength(25);
+    setCurrentlyRunning("Session");
+    const beep = document.getElementById("beep");
+    beep.pause();
+    beep.currentTime = 0;
+  };
+
+  const handleStartStop = () => {
+    toggleRunning((oldState) => {
+      if (oldState == false) startTimer();
+      else clearInterval(int);
+      return !oldState;
+    });
+  };
+
+  const timeString = (seconds) => {
+    let arr = [`${Math.floor(seconds / 60)}`, `${seconds % 60}`];
+    arr = arr.map((str) => (str.length == 1 ? `0${str}` : str));
+    return arr.join(":");
+  };
+
+  const start_stopText = () => (isRunning ? "STOP" : "START");
+
+  return (
+    <div id="clock-box">
+
+      <div id="length-control">
+        <div id="break-label">
+          <h1>Break length</h1>
+          <button
+            class="setting-btn"
+            id="break-decrement5"
+            onClick={() => setBreakLength(incrementBreakCounter(-5))}
+          >
+            &lt;&lt; 5
+          </button>
+          <button
+            class="setting-btn"
+            id="break-decrement"
+            onClick={() => setBreakLength(incrementBreakCounter(-1))}
+          >
+            &lt; 1
+          </button>
+          <span id="break-length">{breakLength}</span>
+          <button
+            class="setting-btn"
+            id="break-increment"
+            onClick={() => setBreakLength(incrementBreakCounter(1))}
+          >
+            1 &gt;
+          </button>
+          <button
+            class="setting-btn"
+            id="break-decrement5"
+            onClick={() => setBreakLength(incrementBreakCounter(5))}
+          >
+            5 &gt;&gt;
+          </button>
+        </div>
+
+        <div id="session-label">
+          <h1>Session length</h1>
+          <button
+            class="setting-btn"
+            id="session-decrement5"
+            onClick={() => setSessionLength(incrementSessionCounter(-5))}
+          >
+            &lt;&lt; 5
+          </button>
+          <button
+            class="setting-btn"
+            id="session-decrement"
+            onClick={() => setSessionLength(incrementSessionCounter(-1))}
+          >
+            &lt; 1
+          </button>
+          <span id="session-length">{sessionLength}</span>
+          <button
+            class="setting-btn"
+            id="session-increment"
+            onClick={() => setSessionLength(incrementSessionCounter(1))}
+          >
+            1 &gt;
+          </button>
+          <button
+            class="setting-btn"
+            id="session-increment5"
+            onClick={() => setSessionLength(incrementSessionCounter(5))}
+          >
+            5 &gt;&gt;
+          </button>
+        </div>
+      </div>
+
+      <div id="timer">
+        <h1 id="timer-label">{currentlyRunning}</h1>
+        <div id="time-left">{timeString(timeLeft)}</div>
+        <button id="start_stop" onClick={handleStartStop}>
+          {start_stopText()}
+        </button>
+        <button id="reset" onClick={resetClock}>
+          Reset
+        </button>
+        <audio
+          id="beep"
+          src="https://sampleswap.org/samples-ghost/SOUND%20EFFECTS%20and%20NOISES/Electro%20and%20Synthetic/192[kb]watch_alarm.aif.mp3"
+        />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<Clock />, document.getElementById("root"));
